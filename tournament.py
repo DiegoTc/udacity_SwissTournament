@@ -6,6 +6,7 @@
 import psycopg2
 import math
 
+
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
     return psycopg2.connect("dbname=tournament")
@@ -13,20 +14,19 @@ def connect():
 
 def deleteMatches(tournament):
     """Remove all the match records from the database."""
-    #print "deleteMatches(tournament): tournament.py"
     DB = connect()
     cur = DB.cursor()
 
-    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)",(tournament,))
+    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)", (tournament,))
     rows = cur.fetchone()
     if(rows is None):
       DB.close()
     else:
       print rows
       id_tournament = rows[0]
-      cur.execute("DELETE FROM scores where id_tournament = (%s)",(id_tournament,))
+      cur.execute("DELETE FROM scores where id_tournament = (%s)", (id_tournament,))
       DB.commit()
-      cur.execute("DELETE FROM matches where id_tournament_name_matches = (%s)",(id_tournament,))
+      cur.execute("DELETE FROM matches where id_tournament_name_matches = (%s)", (id_tournament,))
       DB.commit()
       DB.close()
 
@@ -42,6 +42,7 @@ def deleteTournaments():
     DB.commit()
     DB.close()
 
+
 def deleteCourse():
     DB = connect()
     cur = DB.cursor()
@@ -49,6 +50,7 @@ def deleteCourse():
     cur.execute("DELETE FROM course_tournament")
     DB.commit()
     DB.close()
+
 
 def deletePlayers():
     """Remove all the player records from the database."""
@@ -62,27 +64,30 @@ def deletePlayers():
     DB.commit()
     DB.close()
 
+
 def countPlayers():
     """Returns the number of players currently registered."""
     DB = connect()
     cur = DB.cursor()
 
-    cur.execute ("SELECT count (name) as Name FROM players");
+    cur.execute("SELECT count (name) as Name FROM players")
     rows = cur.fetchone()
     total = rows[0]
     DB.close()
     return total
+
 
 def registerTournament(tournament):
 
     DB = connect()
     cur = DB.cursor()
 
-    cur.execute ("INSERT INTO tournament_name (name) VALUES (%s)",(tournament,))
+    cur.execute("INSERT INTO tournament_name (name) VALUES (%s)", (tournament,))
     DB.commit()
     DB.close()
 
-def registerPlayer(name,tournament):
+
+def registerPlayer(name, tournament):
     """Adds a player to the tournament database.
 
     The database assigns a unique serial id number for the player.  (This
@@ -94,18 +99,18 @@ def registerPlayer(name,tournament):
     DB = connect()
     cur = DB.cursor()
 
-    cur.execute ("INSERT INTO players (name) VALUES (%s)",(name,))
+    cur.execute("INSERT INTO players (name) VALUES (%s)", (name, ))
     DB.commit()
 
     cur.execute("SELECT currval(pg_get_serial_sequence('players','id_players'))")
     rows = cur.fetchone()
     id_player = rows[0]
 
-    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)",(tournament,))
+    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)", (tournament,))
     rows = cur.fetchone()
     id_tournament = rows[0]
 
-    cur.execute ("INSERT INTO course_tournament (id_players,id_tournament) VALUES (%s,%s)",(id_player,id_tournament))
+    cur.execute("INSERT INTO course_tournament (id_players,id_tournament) VALUES (%s,%s)", (id_player, id_tournament))
     DB.commit()
 
     DB.close()
@@ -127,15 +132,15 @@ def playerStandings(id_tournament):
     DB = connect()
     cur = DB.cursor()
 
-    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)",(id_tournament,))
+    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)", (id_tournament,))
     rows = cur.fetchone()
     tournament = rows[0]
 
-    cur.execute ("select p.*,(select count(*) from scores s where p.id_players in (s.winner) and id_tournament = %s ) as GamesWon,(select count(*) from scores s where p.id_players in (s.winner, s.looser) and id_tournament = %s ) as GamesPlayed from players p order by GamesWon desc;",(tournament,tournament,));
+    cur.execute("select p.*,(select count(*) from scores s where p.id_players in (s.winner) and id_tournament = %s ) as GamesWon,(select count(*) from scores s where p.id_players in (s.winner, s.looser) and id_tournament = %s ) as GamesPlayed from players p order by GamesWon desc;", (tournament, tournament, ))
     rows = cur.fetchall()
 
-    standings=[]
-    super_standings=[]
+    standings = []
+    super_standings = []
 
     for x in rows:
       standings.append(x[0])
@@ -146,7 +151,8 @@ def playerStandings(id_tournament):
 
     return rows
 
-def reportMatch(id_tournament,winner, loser):
+
+def reportMatch(id_tournament, winner, loser):
     """Records the outcome of a single match between two players.
 
     Args:
@@ -156,21 +162,20 @@ def reportMatch(id_tournament,winner, loser):
     DB = connect()
     cur = DB.cursor()
 
-    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)",(id_tournament,))
+    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)", (id_tournament, ))
     rows = cur.fetchone()
     tournament = rows[0]
 
-    cur.execute ("SELECT id_match,round FROM matches where id_tournament_name_matches = %s and (id_players_one=%s or id_players_two=%s) and (id_players_one=%s or id_players_two=%s)",(tournament,winner,winner,loser,loser));
+    cur.execute("SELECT id_match,round FROM matches where id_tournament_name_matches = %s and (id_players_one=%s or id_players_two=%s) and (id_players_one=%s or id_players_two=%s)", (tournament, winner, winner, loser, loser))
     rows = cur.fetchall()
 
-    array_idmatches=[]
-    array_round=[]
+    array_idmatches = []
+    array_round = []
     for x in rows:
       array_idmatches.append(x[0])
       array_round.append(x[1])
 
-
-    cur.execute ("INSERT INTO scores (id_matches,winner,looser,id_tournament,round) VALUES (%s,%s,%s,%s,%s)",(array_idmatches[0],winner,loser,tournament,array_round[0]))
+    cur.execute("INSERT INTO scores (id_matches,winner,looser,id_tournament,round) VALUES (%s,%s,%s,%s,%s)", (array_idmatches[0], winner, loser, tournament, array_round[0]))
     DB.commit()
     DB.close()
 
@@ -197,14 +202,13 @@ def swissPairings(id_tournament):
     DB = connect()
     cur = DB.cursor()
 
-    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)",(id_tournament,))
+    cur.execute("SELECT id_tournament_name FROM tournament_name WHERE name = (%s)", (id_tournament, ))
     rows = cur.fetchone()
     tournament = rows[0]
 
-
     players = getPlayerTournament(tournament)
     rounds = getRoundTournament(players)
-    matches = getMatchesTournament(rounds,players)
+    matches = getMatchesTournament(rounds, players)
 
     played_matches = getplayedMatchesTournament(tournament)
 
@@ -218,84 +222,74 @@ def swissPairings(id_tournament):
     DB.commit()
     DB.close()
 
+
 def getFirstRoundTournamenent(tournament):
   DB = connect()
   cur = DB.cursor()
-  cur.execute ("SELECT id_players FROM course_tournament WHERE id_tournament = (%s);",(tournament,));
+  cur.execute("SELECT id_players FROM course_tournament WHERE id_tournament = (%s);", (tournament, ))
   rows = cur.fetchall()
-  array_players=[]
+  array_players = []
   for x in rows:
     array_players.append(x[0])
 
-  pair_tuples=[]
-  super_tuple=[]
   for a, b in pairwise(array_players):
-    cur.execute ("SELECT id_players, name FROM players WHERE id_players = (%s) or id_players = (%s);",(a,b,));
+    cur.execute("SELECT id_players, name FROM players WHERE id_players = (%s) or id_players = (%s);", (a, b, ))
     rows = cur.fetchall()
-    #for x in rows:
-    #  pair_tuples.append(x[0])
-    #  pair_tuples.append(x[1])
-    #  super_tuple.append(tuple(pair_tuples))
-
-    cur.execute ("INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,round) VALUES (%s,%s,%s,%s)",(tournament,a,b,1))
+    cur.execute("INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,round) VALUES (%s,%s,%s,%s)", (tournament, a, b, 1))
 
   DB.commit()
   DB.close()
-
-  return super_tuple
+  return rows
 
 
 def getRoundsTournamanet(tournament):
   DB = connect()
   cur = DB.cursor()
-  cur.execute ("SELECT id_players FROM course_tournament WHERE id_tournament = (%s);",(tournament,));
+  cur.execute("SELECT id_players FROM course_tournament WHERE id_tournament = (%s);", (tournament, ))
   rows = cur.fetchall()
-  array_players=[]
+  array_players = []
   for x in rows:
     array_players.append(x[0])
 
-  cur.execute ("SELECT round FROM matches WHERE id_tournament_name_matches = (%s);",(tournament,));
+  cur.execute("SELECT round FROM matches WHERE id_tournament_name_matches = (%s);", (tournament, ))
   rows = cur.fetchall()
-  array_rounds=[]
+  array_rounds = []
   for x in rows:
     array_rounds.append(x[0])
 
-  array_rounds = sorted(set(array_rounds),reverse=True)
-  nextround= array_rounds[0]+1
-  cur.execute ("SELECT winner,looser FROM scores WHERE id_tournament = (%s) and round = (%s);",(tournament,array_rounds[0],));
+  array_rounds = sorted(set(array_rounds), reverse=True)
+  nextround= array_rounds[0] + 1
+  cur.execute("SELECT winner,looser FROM scores WHERE id_tournament = (%s) and round = (%s);", (tournament, array_rounds[0], ))
   rows = cur.fetchall()
-  array_winners=[]
-  array_looser=[]
+  array_winners = []
+  array_looser = []
   for x in rows:
     array_winners.append(x[0])
     array_looser.append(x[1])
 
-  pair_tuples=()
-  super_tuple=[]
+  pair_tuples = ()
+  super_tuple = []
 
   for a, b in pairwise(array_winners):
-    cur.execute ("SELECT id_players, name FROM players WHERE id_players = (%s) or id_players = (%s);",(a,b,));
+    cur.execute("SELECT id_players, name FROM players WHERE id_players = (%s) or id_players = (%s);", (a, b, ))
     rows = cur.fetchall()
 
     for x in rows:
-      pair_tuples = pair_tuples +(x[0],x[1])
+      pair_tuples = pair_tuples + (x[0], x[1])
 
     super_tuple.append(pair_tuples)
+    cur.execute("INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,round) VALUES (%s,%s,%s,%s)", (tournament, a, b, nextround))
 
-    cur.execute ("INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,round) VALUES (%s,%s,%s,%s)",(tournament,a,b,nextround))
-
-  #print "super tuple"
-  #print super_tuple
-  pair_tuples=()
+  pair_tuples = ()
   for a, b in pairwise(array_looser):
-    cur.execute ("SELECT id_players, name FROM players WHERE id_players = (%s) or id_players = (%s);",(a,b,));
+    cur.execute("SELECT id_players, name FROM players WHERE id_players = (%s) or id_players = (%s);", (a, b, ))
     rows1 = cur.fetchall()
     for x in rows1:
-      pair_tuples = pair_tuples +(x[0],x[1])
+      pair_tuples = pair_tuples + (x[0], x[1])
 
     super_tuple.append(pair_tuples)
 
-    cur.execute ("INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,round) VALUES (%s,%s,%s,%s)",(tournament,a,b,nextround))
+    cur.execute("INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,round) VALUES (%s,%s,%s,%s)", (tournament, a, b, nextround))
 
   DB.commit()
   DB.close()
@@ -305,58 +299,33 @@ def getRoundsTournamanet(tournament):
 def getPlayerTournament(tournament):
   DB = connect()
   cur = DB.cursor()
-  cur.execute ("SELECT count(id_players) FROM course_tournament WHERE id_tournament = (%s);",(tournament,));
+  cur.execute("SELECT count(id_players) FROM course_tournament WHERE id_tournament = (%s);", (tournament, ))
   rows = cur.fetchone()
   players = rows[0]
   DB.close()
   return players
 
+
 def getRoundTournament(players):
-  rounds = math.log(players,2)
+  rounds = math.log(players, 2)
   return int(float(rounds))
+
 
 def getMatchesTournament(rounds, players):
   return (rounds * (players/2))
 
+
 def getplayedMatchesTournament(tournament):
   DB = connect()
   cur = DB.cursor()
-  cur.execute ("SELECT count(id_match) FROM matches WHERE id_tournament_name_matches = (%s);",(tournament,));
+  cur.execute("SELECT count(id_match) FROM matches WHERE id_tournament_name_matches = (%s);", (tournament, ))
   rows = cur.fetchone()
   played_matches = rows[0]
   DB.close()
   return played_matches
 
+
 def pairwise(it):
     it = iter(it)
     while True:
         yield next(it), next(it)
-
-
-#reportMatch(6,8,5)
-#reportMatch(6,2,3)
-#reportMatch(6,7,6)
-#reportMatch(6,9,4)
-#print swissPairings(6)
-#deleteMatches("first")
-"""registerTournament("Second Tournament")
-print registerPlayer("Antonia","Second Tournament")
-print registerPlayer("Roberto","Second Tournament")
-print registerPlayer("Luis","Second Tournament")
-print registerPlayer("Pedro","Second Tournament")
-print registerPlayer("Fernando","Second Tournament")
-print registerPlayer("Alejandra","Second Tournament")
-print registerPlayer("Rene","Second Tournament")
-print registerPlayer("Julieta","Second Tournament")
-print countPlayers()"""
-
-
-#print swissPairings("Second Tournament")
-"""
-reportMatch("Second Tournament",43,45)
-reportMatch("Second Tournament",42,48)
-reportMatch("Second Tournament",41,47)
-reportMatch("Second Tournament",46,44)
-#"""
-#deletePlayers()
-#reportMatch(6,5,6)
