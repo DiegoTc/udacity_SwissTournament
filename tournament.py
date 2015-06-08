@@ -123,7 +123,8 @@ def registerPlayer(name, tournament):
     id_tournament = rows[0]
 
     cur.execute(
-        "INSERT INTO course_tournament (id_players,id_tournament) VALUES (%s,%s)",
+        "INSERT INTO course_tournament (id_players,"
+        "id_tournament) VALUES (%s,%s)",
         (id_player,
          id_tournament))
     DB.commit()
@@ -155,7 +156,10 @@ def playerStandings(id_tournament):
     tournament = rows[0]
 
     cur.execute(
-        "select p.*,(select count(*) from scores s where p.id_players in (s.winner) and id_tournament = %s ) as GamesWon,(select count(*) from scores s where p.id_players in (s.winner, s.looser) and id_tournament = %s ) as GamesPlayed from players p order by GamesWon desc;",
+        "select p.*,(select count(*) from scores s where p.id_players in (s.winner)"
+        "and id_tournament = %s ) as GamesWon,(select count(*) from scores s "
+        "where p.id_players in (s.winner, s.looser) and id_tournament = %s ) "
+        "as GamesPlayed from players p order by GamesWon desc;",
         (tournament,
          tournament,
          ))
@@ -192,7 +196,9 @@ def reportMatch(id_tournament, winner, loser):
     tournament = rows[0]
 
     cur.execute(
-        "SELECT id_match,rounds FROM matches where id_tournament_name_matches = %s and (id_players_one=%s or id_players_two=%s) and (id_players_one=%s or id_players_two=%s)",
+        "SELECT id_match,rounds FROM matches where id_tournament_name_matches = %s and "
+        "(id_players_one=%s or id_players_two=%s) and (id_players_one=%s or "
+        "id_players_two=%s)",
         (tournament,
          winner,
          winner,
@@ -207,7 +213,8 @@ def reportMatch(id_tournament, winner, loser):
         array_rounds.append(x[1])
 
     cur.execute(
-        "INSERT INTO scores (id_matches,winner,looser,id_tournament,rounds) VALUES (%s,%s,%s,%s,%s)",
+        "INSERT INTO scores (id_matches,winner,looser,id_tournament,rounds) "
+        "VALUES (%s,%s,%s,%s,%s)",
         (array_idmatches[0],
          winner,
          loser,
@@ -277,13 +284,16 @@ def getFirstRoundTournamenent(tournament):
 
     for a, b in pairwise(array_players):
         cur.execute(
-            "SELECT id_players, name FROM players WHERE id_players = (%s) or id_players = (%s);",
+            "SELECT id_players, name FROM players WHERE id_players = (%s) or "
+            "id_players = (%s);",
             (a,
              b,
              ))
         rows = cur.fetchall()
         cur.execute(
-            "INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,rounds) VALUES (%s,%s,%s,%s)",
+            "INSERT INTO matches (id_tournament_name_matches,id_players_one,"
+            "id_players_two,rounds) "
+            "VALUES (%s,%s,%s,%s)",
             (tournament,
              a,
              b,
@@ -345,7 +355,9 @@ def getRoundsTournamanet(tournament):
 
         super_tuple.append(pair_tuples)
         cur.execute(
-            "INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,rounds) VALUES (%s,%s,%s,%s)",
+            "INSERT INTO matches (id_tournament_name_matches,id_players_one,"
+            "id_players_two,rounds) "
+            "VALUES (%s,%s,%s,%s)",
             (tournament,
              a,
              b,
@@ -365,7 +377,8 @@ def getRoundsTournamanet(tournament):
         super_tuple.append(pair_tuples)
 
         cur.execute(
-            "INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,rounds) VALUES (%s,%s,%s,%s)",
+            "INSERT INTO matches (id_tournament_name_matches,id_players_one,id_players_two,rounds) "
+            "VALUES (%s,%s,%s,%s)",
             (tournament,
              a,
              b,
