@@ -20,16 +20,16 @@ CREATE TABLE  players(
 
 CREATE TABLE  course_tournament(
   id_players integer references players(id_players) ,
-  id_tournament integer references tournament_name(id_tournament_name) ,
+  id_tournament integer references tournament_name(id_tournament_name),
   PRIMARY KEY(id_players,id_tournament)
 );
 
 CREATE TABLE  matches(
   id_match serial,
-  id_tournament_name_matches integer references tournament_name(id_tournament_name) ,
+  id_tournament_name_matches integer references tournament_name(id_tournament_name),
   id_players_one integer references players (id_players),
   id_players_two integer references players (id_players),
-  round integer
+  rounds integer,
   PRIMARY KEY(id_match)
 );
 
@@ -39,6 +39,6 @@ CREATE TABLE  scores(
   winner integer references players (id_players),
   looser integer references players (id_players),
   id_tournament references tournament_name (id_tournament_name),
-  round integer,
+  rounds integer,
   PRIMARY KEY(id_score)
 );
