@@ -38,7 +38,7 @@ CREATE TABLE  scores(
   id_matches integer references matches (id_match),
   winner integer references players (id_players),
   looser integer references players (id_players),
-  id_tournament references tournament_name (id_tournament_name),
+  id_tournament integer references tournament_name (id_tournament_name),
   rounds integer,
   PRIMARY KEY(id_score)
 );
